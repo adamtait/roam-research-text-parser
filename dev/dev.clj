@@ -22,7 +22,46 @@
 (set-init new-system)
 
 
+
+;;
+;; DataScript DB
+
+(defn filename->db-data
+  [filename]
+  (-> filename
+      slurp
+      (clojure.string/replace #"#datascript/DB " "")
+      clojure.edn/read-string))
+
 (defn datom->tx-data [datom] (concat [:db/add] datom))
+
+(defn data->db-conn
+  [data]
+  {:pre [(s/valid? map? (:schema data))]}
+  (let [conn (d/create-conn (:schema data))]
+    (->> data :datoms
+         (mapv datom->tx-data)
+         (d/transact! conn))
+    conn))
+
+(defn db->all-block-string-datoms
+  [conn]
+  (flatten
+   (d/q
+    '[:find (pull ?e [*])
+      :where [?e :block/string _]]
+    @conn)))
+
+
+;;
+;; parser
+
+(defn ->parser []
+  (-> "grammars/RoamResearch.g4" slurp antlr/parser))
+
+
+;;
+;; data tree
 
 (defn data-seq->type-data
   [ds]
@@ -54,6 +93,9 @@
       %)
    parsed))
 
+
+;;
+;; render
 
 (def type-data->render
   {
@@ -91,18 +133,30 @@
            (apply str)))))
 
 
+;;
+;; dev helpers
+
+(defn string->render
+  [st]
+  (let [parse (->parser)]
+   (->> st
+        parse
+        parsed->data-tree
+        (data-tree->string :html))))
+
 (comment
+
+  (def data (filename->db-data "db.edn"))
+  (def conn (data->db-conn data))
+  (def datoms (db->all-block-string-datoms conn))
+  (def parse (->parser))
   
-  (def data (-> "db.edn"
-                slurp
-                (clojure.string/replace #"#datascript/DB " "")
-                clojure.edn/read-string))
-  (def conn (d/create-conn (:schema data)))
-  (->> data :datoms (mapv datom->tx-data) (d/transact! conn) ((constantly :ok)))
-  (def ss (d/q '[:find (pull ?e [*]) :where [?e :block/string _]] @conn))
-  (def parse (-> "grammars/RoamResearch.g4" slurp antlr/parser))
-  (->> "How [[Roam]] works"
-       parse
-       parsed->data-tree
-       (data-tree->string :html))
+  (time
+   (->> datoms
+        (map :block/string)
+        (map parse)
+        (map parsed->data-tree)
+        (map #(data-tree->string :html %))))
+
+  (def failing-str "Schank, R. (1982). Dynamic memory. New York: Cambridge University Press.")
   )
