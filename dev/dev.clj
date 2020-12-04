@@ -41,5 +41,5 @@
   (def conn (d/create-conn (:schema data)))
   (->> data :datoms (mapv datom->tx-data) (d/transact! conn))
   (def ss (d/q '[:find (pull ?e [*]) :where [?e :block/string _]] @conn))
-  (def rr-parser (-> "grammars/RoamResearch.g4" io/resource slurp antlr/parser))
+  (def rr-parser (-> "grammars/RoamResearch.g4" slurp antlr/parser))
   )

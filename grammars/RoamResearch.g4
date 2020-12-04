@@ -8,26 +8,28 @@
 grammar RoamResearchText;
 
 
-datas: data * ;
+datas : data * ;
 
-data: String
-    | link
-    | ref
-    | roamRender
-    | latex
-    | alias
-    | highlight
-    | bold
-    | italic
-    ;
+data  : link
+      | ref
+      | roamRender
+      | latex
+      | alias
+      | highlight
+      | bold
+      | italic
+      | codeinline
+      | TEXT
+      ;
 
-link: '[[' datas ']]';
-ref: '((' datas '))';
-roamRender: '{{' datas '}}';
-latex: '$$' datas '$$';
-alias: '[' datas '](' datas ')';
-highlight: '^^' datas '^^';
-bold: '**' datas '**';
-italic: '__' datas '__';
+link        : '[[' datas ']]';
+ref         : '((' datas '))';
+roamRender  : '{{' datas '}}';
+latex       : '$$' datas '$$';
+alias       : '[' datas '](' datas ')';
+highlight   : '^^' datas '^^';
+bold        : '**' datas '**';
+italic      : '__' datas '__';
+codeinline  : '`' TEXT '`';
 
-String: [0-9a-zA-Z ] +;
+TEXT        : ~( '`' | '[' | ']' | '(' | ')' | '{' | '}' | '$' | '^' | '*' | '_' )+;
