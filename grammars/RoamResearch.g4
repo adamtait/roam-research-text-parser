@@ -10,26 +10,57 @@ grammar RoamResearchText;
 
 datas : data * ;
 
-data  : link
+data  : alias
+      | link
       | ref
       | roamRender
       | latex
-      | alias
       | highlight
       | bold
       | italic
       | codeinline
+      | LINKA | LINKB
+      | REFA | REFB
+      | RRA | RRB
+      | LATEXA
+      | ALIASA | ALIASB | ALIASC
+      | HLA
+      | BOLDA
+      | ITALICA
+      | CODEINLINEA
       | TEXT
       ;
 
-link        : '[[' datas ']]';
-ref         : '((' datas '))';
-roamRender  : '{{' datas '}}';
-latex       : '$$' datas '$$';
-alias       : '[' datas '](' datas ')';
-highlight   : '^^' datas '^^';
-bold        : '**' datas '**';
-italic      : '__' datas '__';
-codeinline  : '`' TEXT '`';
+link        : LINKA datas LINKB;
+LINKA       : '[[';
+LINKB       : ']]';
+
+ref         : REFA datas REFB;
+REFA        : '((';
+REFB        : '))';
+
+roamRender  : RRA datas RRB;
+RRA         : '{{';
+RRB         : '}}';
+
+latex       : LATEXA datas LATEXA;
+LATEXA      : '$$';
+
+alias       : ALIASA datas ALIASB datas ALIASC;
+ALIASA      : '[';
+ALIASB      : '](';
+ALIASC      : ')';
+
+highlight   : HLA datas HLA;
+HLA         : '^^';
+
+bold        : BOLDA datas BOLDA;
+BOLDA       : '**';
+
+italic      : ITALICA datas ITALICA;
+ITALICA     : '__';
+
+codeinline  : CODEINLINEA TEXT CODEINLINEA;
+CODEINLINEA : '`';
 
 TEXT        : ( ~( '`' | '[' | ']' | '(' | ')' | '{' | '}' | '$' | '^' | '*' | '_' ) | '{'~'{' | '}'~'}' | '$'~'$' | '^'~'^' | '*'~'*' | '_'~'_' ) +;
