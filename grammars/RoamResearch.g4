@@ -19,17 +19,22 @@ data  : alias
       | bold
       | italic
       | codeinline
+      | ALIASA | ALIASB | ALIASC
       | LINKA | LINKB
       | REFA | REFB
       | RRA | RRB
       | LATEXA
-      | ALIASA | ALIASB | ALIASC
       | HLA
       | BOLDA
       | ITALICA
       | CODEINLINEA
       | TEXT
       ;
+
+alias       : ALIASA datas ALIASB datas ALIASC;
+ALIASA      : '[';
+ALIASB      : '](';
+ALIASC      : ')';
 
 link        : LINKA datas LINKB;
 LINKA       : '[[';
@@ -46,21 +51,20 @@ RRB         : '}}';
 latex       : LATEXA datas LATEXA;
 LATEXA      : '$$';
 
-alias       : ALIASA datas ALIASB datas ALIASC;
-ALIASA      : '[';
-ALIASB      : '](';
-ALIASC      : ')';
-
 highlight   : HLA datas HLA;
 HLA         : '^^';
 
 bold        : BOLDA datas BOLDA;
 BOLDA       : '**';
 
-italic      : ITALICA datas ITALICA;
+italic      : '__' datas '__';
 ITALICA     : '__';
 
 codeinline  : CODEINLINEA TEXT CODEINLINEA;
-CODEINLINEA : '`';
+CODEINLINEA : '`' | '`' | '`';
 
-TEXT        : ( ~( '`' | '[' | ']' | '(' | ')' | '{' | '}' | '$' | '^' | '*' | '_' ) | '{'~'{' | '}'~'}' | '$'~'$' | '^'~'^' | '*'~'*' | '_'~'_' ) +;
+TEXT        : ( '_'~'_' | ']'~'(' | ']'~']' | '('~'(' | '{'~'{' | '}'~'}' | '$'~'$' | '^'~'^' | '*'~'*' | ~'[' | ~')' | ~'`' | ~'`' | ~'`' ) +?;
+
+// ( . ) +?;
+
+// ( ~( '`' | '[' | ']' | '(' | ')' | '{' | '}' | '$' | '^' | '*' | '_' ) | '{'~'{' | '}'~'}' | '$'~'$' | '^'~'^' | '*'~'*' | '_'~'_' ) +;
