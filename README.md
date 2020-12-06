@@ -19,3 +19,19 @@ By: Adam Tait
 
 I recommend using `clojure.walk/postwalk-replace`. You can choose any
 pattern in the parse tree to replace.
+
+
+## Performance
+
+
+```
+dev> (->> datoms
+          (map :block/string)
+          (map parse)
+          (map parsed->data-tree)
+          (map #(data-tree->string :html %))
+          doall
+          time)
+"Elapsed time: 117855.919702 msecs"
+```
+     
