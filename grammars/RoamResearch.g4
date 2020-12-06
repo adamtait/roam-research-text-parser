@@ -3,16 +3,13 @@
     code: https://github.com/adamtait/roam-research-text-parser
  */
 
-grammar RoamResearchText;
+grammar RoamResearch;
 
 
-file     : block + contents | contents ;
-
-block    : content *?  CR? '\n' ;
-
-contents : content *? ;
-
-content  :
+file     : block+ contents | contents ;
+block    : contents CR? NL ;
+contents : feature* ;
+feature  :
          alias
          | link
          | ref
@@ -22,46 +19,39 @@ content  :
          | bold
          | italic
          | codeinline
-         | ALIASA | ALIASB | ALIASC
          | string
+         | token
          ;
 
-alias       : ALIASA contents ALIASB contents ALIASC ;
-ALIASA      : '[' ;
-ALIASB      : '](' ;
-ALIASC      : ')' ;
+link        : LSQ LSQ contents RSQ RSQ ;
+alias       : LSQ? LSQ contents RSQ LP contents RP RP? ;
+ref         : LP LP contents RP RP ;
+roamRender  : LB LB contents RB RB ;
+latex       : DOLLAR DOLLAR contents DOLLAR DOLLAR ;
+highlight   : CARET CARET contents CARET CARET ;
+bold        : STAR STAR contents STAR STAR ;
+italic      : USCORE USCORE contents USCORE USCORE ;
+codeinline  : BTICK contents BTICK ;
 
-link        : LINKA contents LINKB ;
-LINKA       : '[[' ;
-LINKB       : ']]' ;
 
-ref         : REFA contents REFB ;
-REFA        : '((' ;
-REFB        : '))' ;
+string      : CHAR +? ;
+CHAR        : ~( '\n' | '\r' | '(' | ')' | '[' | ']' | '{' | '}' | '$' | '^' | '*' | '_' | '`' ) ;
+token       : LP | RP | LSQ | RSQ | LB | RB | DOLLAR | CARET | STAR | USCORE | BTICK ;
 
-roamRender  : RRA contents RRB ;
-RRA         : '{{' ;
-RRB         : '}}' ;
-
-latex       : LATEXA contents LATEXA ;
-LATEXA      : '$$' ;
-
-highlight   : HLA contents HLA ;
-HLA         : '^^' ;
-
-bold        : BOLDA contents BOLDA ;
-BOLDA       : '**' ;
-
-italic      : ITALICA contents ITALICA ;
-ITALICA     : '__' ;
-
-codeinline  : CODEINLINEA contents CODEINLINEA ;
-CODEINLINEA : '`' ; 
-
-string      : TEXT + ;
-TEXT        : ~[\n\r] +? ;
+LP          : '(' ;
+RP          : ')' ;
+LSQ         : '[' ;
+RSQ         : ']' ;
+LB          : '{' ;
+RB          : '}' ;
+DOLLAR      : '$' ;
+CARET       : '^' ;
+STAR        : '*' ;
+USCORE      : '_' ;
+BTICK       : '`' ;
 
 CR          : '\r' -> skip;
+NL          : '\n' ;
 
 
 //( '_'~'_' | ']'~'(' | ']'~']' | '('~'(' | '{'~'{' | '}'~'}' | '$'~'$' | '^'~'^' | '*'~'*' | ~'[' | ~')' | ~'`' | ~'`' | ~'`' ) +?;
