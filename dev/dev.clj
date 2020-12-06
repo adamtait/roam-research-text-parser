@@ -70,7 +70,7 @@
   [ds]
   ;; (first ds) => :data
   (if (string? (second ds))
-    [:text (second ds)]
+    [:string (second ds)]
     (let [t (-> ds second first)
           cs (-> ds second rest)]
       (condp = t
@@ -83,7 +83,7 @@
         :bold        [:bold (nth cs 1)]
         :italic      [:italic (nth cs 1)]
         :codeinline  [:codeinline (nth cs 1)]
-        :string      [:string (st/join #"" cs)]
+        :string      [:string (st/join "" cs)]
         nil))))
 
 (defn parsed->data-tree
@@ -92,7 +92,7 @@
    #(if-not (seq? %)
       (if-not (newline? %)
         % [:string %])
-      (condp = (first %)
+      (condp = (first %)    ;; seq
         :file     (rest %)
         :block    (rest %)
         :contents (rest %)
@@ -182,4 +182,15 @@
        (map #(data-tree->string :html %))
        doall
        time)
+
+  (def all-blocks
+    (->> datoms
+         (map :block/string)
+         (st/join "\n")))
+  (def results
+    (->> all-blocks
+         parse
+         parsed->data-tree
+         (data-tree->string :html)))
+  (time results)
   )

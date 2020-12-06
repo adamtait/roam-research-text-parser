@@ -22,6 +22,7 @@ content  :
          | bold
          | italic
          | codeinline
+         | ALIASA | ALIASB | ALIASC
          | string
          ;
 
