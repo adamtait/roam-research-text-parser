@@ -8,7 +8,7 @@ grammar RoamResearchText;
 
 file     : block + contents | contents ;
 
-block    : content *?  '\r'? '\n' ;
+block    : content *?  CR? '\n' ;
 
 contents : content *? ;
 
@@ -59,6 +59,8 @@ CODEINLINEA : '`' ;
 
 string      : TEXT + ;
 TEXT        : ~[\n\r] +? ;
+
+CR          : '\r' -> skip;
 
 
 //( '_'~'_' | ']'~'(' | ']'~']' | '('~'(' | '{'~'{' | '}'~'}' | '$'~'$' | '^'~'^' | '*'~'*' | ~'[' | ~')' | ~'`' | ~'`' | ~'`' ) +?;
