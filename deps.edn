@@ -15,12 +15,11 @@
  
  :aliases
  {
-  :repl {:extra-deps
-         {cider/cider-nrepl                {:mvn/version "0.25.1"}
-          com.stuartsierra/component.repl  {:mvn/version "0.2.0"}
-          spyscope                         {:mvn/version "0.1.6"}}
-         :extra-paths ["dev"]
-         :main-opts ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}
+  :nrepl {:extra-deps
+          {cider/cider-nrepl                {:mvn/version "0.25.1"}
+           com.stuartsierra/component.repl  {:mvn/version "0.2.0"}}
+          :extra-paths ["dev"]
+          :main-opts ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}
 
   :test {:extra-deps
          {lambdaisland/kaocha              {:mvn/version "1.0.632"}}}}}
