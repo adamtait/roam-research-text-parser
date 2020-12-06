@@ -1,16 +1,15 @@
-/* Roam Research
-    Text Grammar
-
+/* Roam Research: Text Grammar
     By Adam Tait (a@adamtait.com)
-    url: https://github.com/adamtait/roam-research-text-parser
+    code: https://github.com/adamtait/roam-research-text-parser
  */
 
 grammar RoamResearchText;
 
 
-datas : data * ;
+datas : data *? ;
 
-data  : alias
+data  :
+      alias
       | link
       | ref
       | roamRender
@@ -19,6 +18,7 @@ data  : alias
       | bold
       | italic
       | codeinline
+      | string
       | ALIASA | ALIASB | ALIASC
       | LINKA | LINKB
       | REFA | REFB
@@ -57,14 +57,15 @@ HLA         : '^^';
 bold        : BOLDA datas BOLDA;
 BOLDA       : '**';
 
-italic      : '__' datas '__';
+italic      : ITALICA datas ITALICA;
 ITALICA     : '__';
 
-codeinline  : CODEINLINEA TEXT CODEINLINEA;
-CODEINLINEA : '`' | '`' | '`';
+codeinline  : CODEINLINEA datas CODEINLINEA;
+CODEINLINEA : '`';
 
-TEXT        : ( '_'~'_' | ']'~'(' | ']'~']' | '('~'(' | '{'~'{' | '}'~'}' | '$'~'$' | '^'~'^' | '*'~'*' | ~'[' | ~')' | ~'`' | ~'`' | ~'`' ) +?;
+string      : TEXT+;
+TEXT        : .+?;
 
-// ( . ) +?;
 
+//( '_'~'_' | ']'~'(' | ']'~']' | '('~'(' | '{'~'{' | '}'~'}' | '$'~'$' | '^'~'^' | '*'~'*' | ~'[' | ~')' | ~'`' | ~'`' | ~'`' ) +?;
 // ( ~( '`' | '[' | ']' | '(' | ')' | '{' | '}' | '$' | '^' | '*' | '_' ) | '{'~'{' | '}'~'}' | '$'~'$' | '^'~'^' | '*'~'*' | '_'~'_' ) +;
