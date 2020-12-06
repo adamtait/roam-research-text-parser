@@ -6,65 +6,59 @@
 grammar RoamResearchText;
 
 
-datas : data *? ;
+file     : block + contents | contents ;
 
-data  :
-      alias
-      | link
-      | ref
-      | roamRender
-      | latex
-      | highlight
-      | bold
-      | italic
-      | codeinline
-      | string
-      | ALIASA | ALIASB | ALIASC
-      | LINKA | LINKB
-      | REFA | REFB
-      | RRA | RRB
-      | LATEXA
-      | HLA
-      | BOLDA
-      | ITALICA
-      | CODEINLINEA
-      | TEXT
-      ;
+block    : content *?  '\r'? '\n' ;
 
-alias       : ALIASA datas ALIASB datas ALIASC;
-ALIASA      : '[';
-ALIASB      : '](';
-ALIASC      : ')';
+contents : content *? ;
 
-link        : LINKA datas LINKB;
-LINKA       : '[[';
-LINKB       : ']]';
+content  :
+         alias
+         | link
+         | ref
+         | roamRender
+         | latex
+         | highlight
+         | bold
+         | italic
+         | codeinline
+         | string
+         ;
 
-ref         : REFA datas REFB;
-REFA        : '((';
-REFB        : '))';
+alias       : ALIASA contents ALIASB contents ALIASC ;
+ALIASA      : '[' ;
+ALIASB      : '](' ;
+ALIASC      : ')' ;
 
-roamRender  : RRA datas RRB;
-RRA         : '{{';
-RRB         : '}}';
+link        : LINKA contents LINKB ;
+LINKA       : '[[' ;
+LINKB       : ']]' ;
 
-latex       : LATEXA datas LATEXA;
-LATEXA      : '$$';
+ref         : REFA contents REFB ;
+REFA        : '((' ;
+REFB        : '))' ;
 
-highlight   : HLA datas HLA;
-HLA         : '^^';
+roamRender  : RRA contents RRB ;
+RRA         : '{{' ;
+RRB         : '}}' ;
 
-bold        : BOLDA datas BOLDA;
-BOLDA       : '**';
+latex       : LATEXA contents LATEXA ;
+LATEXA      : '$$' ;
 
-italic      : ITALICA datas ITALICA;
-ITALICA     : '__';
+highlight   : HLA contents HLA ;
+HLA         : '^^' ;
 
-codeinline  : CODEINLINEA datas CODEINLINEA;
-CODEINLINEA : '`';
+bold        : BOLDA contents BOLDA ;
+BOLDA       : '**' ;
 
-string      : TEXT+;
-TEXT        : .+?;
+italic      : ITALICA contents ITALICA ;
+ITALICA     : '__' ;
+
+codeinline  : CODEINLINEA contents CODEINLINEA ;
+CODEINLINEA : '`' ; 
+
+string      : TEXT + ;
+TEXT        : ~[\n\r] +? ;
 
 
 //( '_'~'_' | ']'~'(' | ']'~']' | '('~'(' | '{'~'{' | '}'~'}' | '$'~'$' | '^'~'^' | '*'~'*' | ~'[' | ~')' | ~'`' | ~'`' | ~'`' ) +?;
