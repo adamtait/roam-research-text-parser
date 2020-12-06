@@ -60,6 +60,8 @@
 (defn ->parser []
   (-> "grammars/RoamResearch.g4" slurp antlr/parser))
 
+(defn newline? [s] (or (= s "\r") (= s "\n")))
+
 
 ;;
 ;; data tree
@@ -87,12 +89,15 @@
 (defn parsed->data-tree
   [parsed]
   (w/postwalk
-   #(if (seq? %)
+   #(if-not (seq? %)
+      (if-not (newline? %)
+        % [:string %])
       (condp = (first %)
-        :datas (rest %)
-        :data  (data-seq->type-data %)
-        %)
-      %)
+        :file     (rest %)
+        :block    (rest %)
+        :contents (rest %)
+        :content  (data-seq->type-data %)
+        %))  ;; default
    parsed))
 
 
@@ -112,7 +117,8 @@
     :bold        #(str "<b>" % "</b>")
     :italic      #(str "<i>" % "</i>")
     :codeinline  #(str "<span class='codeinline'>" % "</span>")
-    :string      #(str "<span class='string'>" % "</span>")
+    :string      #(if (newline? %) "<br/>"
+                      (str "<span class='string'>" % "</span>"))
     :text        #(str "<span class='text'>" % "</span>")}})
 
 (defn valid-renderer-type? [rrt]
@@ -124,26 +130,30 @@
   {:pre [(s/valid? valid-renderer-type? renderer-type)]}
   
   (let [rr (get type-data->render renderer-type)]
-    (letfn [(type-data->string [renderer ld]
+    (letfn [(type-data->string [ld]
               (try
-                (let [t (first ld)]
-                  (let [rf (get renderer t)]
-                    (->> ld rest
-                         (map #(data-tree->string renderer-type %))
-                         (apply rf))))
+                (let [t (first ld)
+                      rf (get rr t)]
+                  (->> ld rest
+                       (map #(data-tree->string renderer-type %))
+                       (apply rf)))
+                
                 (catch Throwable t
                   (println (clojure.main/err->msg t))
-                  (clojure.pprint/pprint ld)
-                  (clojure.pprint/pprint t)
+                  (prn ld)
+                  (prn t)
                   (throw t))))]
       (try
-        (if-not (seq? data-tree) data-tree
-                (->> data-tree
-                     (map #(type-data->string rr %))
-                     (apply str)))
+        (if-not
+            (seq? data-tree) data-tree
+            (->> data-tree
+                 (map #(if (seq? %) (data-tree->string renderer-type %)
+                           (type-data->string %)))  ;; vector => [:string "hi"]
+                 (apply str)))
+        
         (catch Throwable t
           (println (clojure.main/err->msg t))
-          (clojure.pprint/pprint data-tree)
+          (prn data-tree)
           (throw t))))))
 
 
