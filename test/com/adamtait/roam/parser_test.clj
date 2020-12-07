@@ -1,4 +1,4 @@
-,(ns com.adamtait.roam.parser-test
+(ns com.adamtait.roam.parser-test
   (:require
    [clojure.test :refer [deftest testing is]]
    [com.adamtait.roam.parser :refer [->parser]]))
