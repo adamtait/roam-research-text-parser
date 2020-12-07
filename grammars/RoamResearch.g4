@@ -8,7 +8,7 @@ grammar RoamResearch;
 
 file     : block+ contents | contents ;
 block    : contents CR? NL ;
-contents : feature* ;
+contents : feature*? ;
 feature  :
          alias
          | link
@@ -34,7 +34,7 @@ italic      : USCORE USCORE contents USCORE USCORE ;
 codeinline  : BTICK contents BTICK ;
 
 
-string      : CHAR +? ;
+string      : CHAR + ;
 CHAR        : ~( '\n' | '\r' | '(' | ')' | '[' | ']' | '{' | '}' | '$' | '^' | '*' | '_' | '`' ) ;
 token       : LP | RP | LSQ | RSQ | LB | RB | DOLLAR | CARET | STAR | USCORE | BTICK ;
 
