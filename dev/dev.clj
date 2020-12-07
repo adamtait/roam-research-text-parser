@@ -42,27 +42,13 @@
   (def datoms (rdb/db->all-block-string-datoms conn))
   (def parse (->parser))
   
-  (->> datoms
-       (map :block/string)
-       (map parse)
-       (map rp/parsed->data-tree)
-       (map #(rr/data-tree->string :html %))
-       doall
-       time)
-
   (def all-blocks
     (->> datoms
          (map :block/string)
          (st/join "\n")))
-  (def results
-    (->> all-blocks
-         parse
-         rp/parsed->data-tree
-         (rr/data-tree->string :html)))
-  (time results)
-
-  (->> some-blocks
-       parse
-       rp/parsed->data-tree
-       (rr/data-tree->string :html))
-  )
+  
+  (time
+   (->> all-blocks
+        string->parse->render
+        ((constantly :ok)))
+   ))
