@@ -66,43 +66,118 @@
 ;;
 ;; data tree
 
-(defn data-seq->type-data
-  [ds]
-  ;; (first ds) => :data
-  (if (string? (second ds))
-    [:string (second ds)]
-    (let [t (-> ds second first)
-          cs (-> ds second rest)]
-      (condp = t
-        :link        [:link (nth cs 1)]
-        :ref         [:ref (nth cs 1)]
-        :roamRender  [:roam-render (nth cs 1)]
-        :latex       [:latex (nth cs 1)]
-        :alias       [:alias (nth cs 1) (nth cs 3)]
-        :highlight   [:highlight (nth cs 1)]
-        :bold        [:bold (nth cs 1)]
-        :italic      [:italic (nth cs 1)]
-        :codeinline  [:codeinline (nth cs 1)]
-        :string      [:string (st/join "" cs)]
-        nil))))
+(def string->wrap #(-> % list list))
+
+(defn string-token->join
+  "join individual chars of string/token"
+  [t feature-rest]
+  (cond-> feature-rest
+    (#{:string :token} t)
+    (->> (st/join "") string->wrap)))
+
+(defn feature->args
+  "ensure optional tokens get included. only need on :alias (unless
+  grammars/RoamResearch changes)"
+  [t feature-rest]
+  (if-not
+      (= :alias t) feature-rest
+      (cond-> feature-rest
+
+        (= "[" (second feature-rest))    ;; optional '[' at beginning
+        (->> (drop 2) (concat [(list [:string (string->wrap "[")])]))
+        
+        (->> feature-rest (take-last 2) (every? #(= ")" %)))   ;; optional ')' at end
+        (->> (drop-last 2) (#(concat % [(list [:string (string->wrap ")")])]))))))
+
+(def feature-type->data-k
+  {:alias       :alias
+   :bold        :bold
+   :codeinline  :codeinline
+   :highlight   :highlight
+   :italic      :italic
+   :latex       :latex
+   :link        :link
+   :ref         :ref
+   :roamRender  :roam-render
+   :string      :string
+   :token       :string})
+
+(defn valid-feature-type? [t]
+  (let [s (->> feature-type->data-k keys set)]
+    (contains? s t)))
+
+(defn feature->data
+  [t feature-rest]
+  {:pre [(s/valid? valid-feature-type? t)]}
+  [(get feature-type->data-k t)
+   feature-rest])
+
+(defn parsed->walk
+  [feature->data-fn parsed]
+  (if-not (seq? parsed)
+    (if-not (newline? parsed) parsed
+            (list [:string (string->wrap parsed)]))
+
+    (condp = (first parsed) ;; seq
+      :file     (->> parsed rest (apply concat))
+      :block    (->> parsed rest (apply concat))
+      :contents (rest parsed)
+      :feature  (-> parsed second feature->data-fn)
+      parsed)))   ;; default
 
 (defn parsed->data-tree
   [parsed]
-  (w/postwalk
-   #(if-not (seq? %)
-      (if-not (newline? %)
-        % [:string %])
-      (condp = (first %)    ;; seq
-        :file     (rest %)
-        :block    (rest %)
-        :contents (rest %)
-        :content  (data-seq->type-data %)
-        %))  ;; default
-   parsed))
+  (letfn [(seq->feature-data [rd]
+            (if (string? rd) [:string (string->wrap rd)]
+
+                (let [t (first rd)]
+                  (->> rd rest
+                       (string-token->join t)
+                       (feature->args t)
+                       (filter seq?)       ;; remove extra tokens from feature
+                       parsed->data-tree   ;; recur
+                       (feature->data t)))))]
+
+    (if-not (seq? parsed) parsed
+
+            (w/postwalk
+             #(parsed->walk seq->feature-data %)
+             parsed))))
 
 
 ;;
 ;; render
+
+(defn string->render
+  [string-coll]
+  (let [s (ffirst string-coll)]
+    (if (newline? s) "<br/>"
+        (str "<span class='string'>" s "</span>"))))
+
+(defn arg->optional-char?
+  "required to determine args given to alias->render. arg is already
+  rendered."
+  [arg]
+  (or
+   (= arg (string->render '(("["))))
+   (= arg (string->render '((")"))))))
+
+(defn alias->render
+  ([als target]
+   (str "<a class='alias' href='" target "'>" als "</a>"))
+
+  ([a b c]
+   ;; either a or c is an optional character
+   (let [args (if (arg->optional-char? a) [a b c ""]
+                  ["" a b c])]
+     (apply alias->render args)))
+  
+  ([pre als target post]
+   ;; pre/post always = ([:string (("["))])
+   (str
+    pre
+    (alias->render als target)
+    post)))
 
 (def type-data->render
   {
@@ -112,14 +187,12 @@
     :ref         #(str "<span class='ref'>" % "</span>")
     :roam-render #(str "<span class='roam-render'>" % "</span>")
     :latex       #(str "<span class='latex'>" % "</span>")
-    :alias       #(str "<a class='alias' href='" %2 "'>" %1 "</a>")
+    :alias       alias->render
     :highlight   #(str "<span class='highlight'>" % "</span>")
     :bold        #(str "<b>" % "</b>")
     :italic      #(str "<i>" % "</i>")
     :codeinline  #(str "<span class='codeinline'>" % "</span>")
-    :string      #(if (newline? %) "<br/>"
-                      (str "<span class='string'>" % "</span>"))
-    :text        #(str "<span class='text'>" % "</span>")}})
+    :string      string->render}})
 
 (defn valid-renderer-type? [rrt]
   (-> type-data->render keys set
@@ -129,38 +202,38 @@
   [renderer-type data-tree]
   {:pre [(s/valid? valid-renderer-type? renderer-type)]}
   
-  (let [rr (get type-data->render renderer-type)]
-    (letfn [(type-data->string [ld]
-              (try
-                (let [t (first ld)
-                      rf (get rr t)]
-                  (->> ld rest
-                       (map #(data-tree->string renderer-type %))
-                       (apply rf)))
-                
-                (catch Throwable t
-                  (println (clojure.main/err->msg t))
-                  (prn ld)
-                  (prn t)
-                  (throw t))))]
-      (try
-        (if-not
-            (seq? data-tree) data-tree
-            (->> data-tree
-                 (map #(if (seq? %) (data-tree->string renderer-type %)
-                           (type-data->string %)))  ;; vector => [:string "hi"]
-                 (apply str)))
-        
-        (catch Throwable t
-          (println (clojure.main/err->msg t))
-          (prn data-tree)
-          (throw t))))))
+  (letfn [(type-data->string [ld]
+            (try
+              (let [t (first ld)
+                    rf (get-in type-data->render [renderer-type t])
+                    args (second ld)]
+                (if (= :string t) (rf args)
+                    (->> args
+                         (map #(data-tree->string renderer-type %))
+                         (apply rf))))
+              
+              (catch Throwable t
+                (println (clojure.main/err->msg t))
+                (prn ld)
+                (prn t)
+                (throw t))))]
+    (try
+      (if-not (seq? data-tree) data-tree
+              (->> data-tree
+                   (map #(if (seq? %) (data-tree->string renderer-type %)
+                             (type-data->string %)))  ;; vector => [:string "hi"]
+                   (apply str)))
+      
+      (catch Throwable t
+        (println (clojure.main/err->msg t))
+        (prn data-tree)
+        (throw t)))))
 
 
 ;;
 ;; dev helpers
 
-(defn string->render
+(defn string->parse->render
   [st]
   (let [parse (->parser)]
     (->> st
@@ -193,4 +266,9 @@
          parsed->data-tree
          (data-tree->string :html)))
   (time results)
+
+  (->> some-blocks
+       parse
+       parsed->data-tree
+       (data-tree->string :html))
   )
