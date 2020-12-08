@@ -108,6 +108,6 @@ so it may be possible to make a `cljs-antlr` but I haven't
 investigated what buliding that capability would require.
 
 
-### Known issues with current implementation
+### Known issues
 
 [See issues.](https://github.com/adamtait/roam-research-text-parser/issues)
