@@ -31,7 +31,9 @@ pattern in the parse tree to replace.
 
 ## Performance
 
-Using `datoms` from [Roam Research - Help](https://roamresearch.com/#/app/help/page/NYgRwJaQM) database.
+Using `datoms` from [Roam Research -
+Help](https://roamresearch.com/#/app/help/page/NYgRwJaQM) database.
+There are 29023 block strings in that database as of 2020/12/7.
 
 Run on an Apple MacBook Pro 2015 (16Gb RAM).
 
