@@ -51,3 +51,32 @@
         (:contents (:feature (:string "t" "a" "r" "g" "e" "t")))
         ")"))
       (:feature (:token "]"))))))
+
+(deftest alias-inside-alias
+  (is
+   (string->parse
+    "[![img](image-as-alias.com)](www.roamreasearch.com)")
+
+   '(:file
+     (:contents
+      (:feature
+       (:alias
+        "["
+        (:contents
+         (:feature (:string "!"))
+         (:feature
+          (:alias
+           "["
+           (:contents (:feature (:string "i" "m" "g")))
+           "]"
+           "("
+           (:contents
+            (:feature
+             (:string "i" "m" "a" "g" "e" "-" "a" "s" "-" "a" "l" "i" "a" "s" "." "c" "o" "m")))
+           ")")))
+        "]"
+        "("
+        (:contents
+         (:feature
+          (:string "w" "w" "w" "." "r" "o" "a" "m" "r" "e" "a" "s" "e" "a" "r" "c" "h" "." "c" "o" "m")))
+        ")"))))))
